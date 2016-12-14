@@ -618,8 +618,8 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
 
     def _reverse_pair(s, sep="_"):
         lst = s.split(sep)
-        return sep.join([lst[1], lst[0]])
+        return sep.join(lst[::-1])
 
     def _split_currency_pair(self, s, sep="_"):
         lst = s.split(sep)
-        return (lst[0], lst[1])
+        return tuple(lst)
