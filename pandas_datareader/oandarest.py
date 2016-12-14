@@ -561,24 +561,21 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
                 response = oanda.request(request)
                 current_start = current_end
                 includeCandleOnStart = False
-            except Exception as error:
-                isExceedResultsLimitError = re.findall(
-                    "The results returned satisfying the query exceeds the maximum size", str(error))
-                isExceedResultsLimitError = True if len(
-                    isExceedResultsLimitError) else False
 
-                if isExceedResultsLimitError:
-                    # Problem: OANDA caps returned range to 5000 results max
-                    # Solution: Reduce requested date interval to return less
-                    # than 5000 results
+            except V20Error as error:
+                # Problem: OANDA caps returned range to 5000 results max
+                # Solution: Reduce requested date interval to return less
+                # than 5000 results
+                if "Maximum value for 'count' exceeded" in error.msg:
                     current_duration /= 2
                     continue
-                else:
-                    if type(error) is V20Error:
-                        print("Request failed with code: " + str(error.code) + " and message: " + str(error.msg))
-                    else:
-                        print("ERROR OANDA: " + str(error))
+                else: # re-raise
+                    print("ERROR OANDA: " + str(error))
                     raise error
+
+            except Exception as error:
+                print("ERROR : " + error)
+                raise error
 
             # print(response)
 
