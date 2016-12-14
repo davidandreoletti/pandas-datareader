@@ -123,7 +123,7 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
         "1M": "M"
     }
 
-    def __init__(self, symbols, symbolsTypes=None,
+    def __init__(self, symbols=["EUR_USD"], symbolsTypes=["currency"],
                  start=None, end=None,
                  freq=None, candleFormat=None,
                  session=None,
@@ -138,15 +138,12 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
             self.reader_compatible = False
 
         self.symbols = symbols
-        if symbols is None:
-            self.symbols = ["EUR_USD"]
-
         if type(symbols) is str:
             self.symbols = [symbols]
 
         self.symbolsTypes = symbolsTypes
-        if symbolsTypes is None:
-            self.symbolsTypes = ["currency"]
+        if type(symbolsTypes) is str:
+            self.symbolsTypes = [symbolsTypes]
 
         if len(self.symbols) != len(self.symbolsTypes):
             self.symbolsTypes = ["currency" for x in self.symbols]
