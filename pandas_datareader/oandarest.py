@@ -18,7 +18,6 @@ from datetime import datetime
 from time import time
 
 import pandas as pd
-import re
 
 from oandapyV20 import API, V20Error
 import oandapyV20.endpoints.instruments as instruments
