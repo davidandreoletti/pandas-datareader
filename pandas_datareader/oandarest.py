@@ -34,15 +34,15 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
     """
         Historical Currency Pair Reader using  OANDA's REST v20 API.
         See details at http://developer.oanda.com/rest-live-v20/instrument-ep/
-        symbols : string or Dict of strings.
+        symbols : string or List of strings.
             Each string is a currency pair with format BASE_QUOTE. Eg: ["EUR_USD", "JPY_USD"]
-        symbolsTypes: Dict of strings.
+        symbolsTypes: List of strings.
             Each string represent the type of instrument to fetch data for. Eg: For symbols=["EUR_USD", "EUR_JPY"] then symbolsTypes=["currency", "currency"]
             Valid values: currency
         start: string
-            Date to begin fetching curerncy pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
+            Date to begin fetching currency pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
         end: string
-            Date to end fetching curerncy pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
+            Date to end fetching currency pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
         freq: string or Pandas's DateOffset
             Frequency or periodicity of the candlesticks to be retrieved
             Valid values are the following Panda's Offset Aliases (http://pandas.pydata.org/pandas-docs/stable/timeseries.html):
@@ -77,7 +77,7 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
             Default: See DEFAULT_CANDLE_FORMAT
         access_credential: Dict of strings
             Credential to query the api
-            credential["accountType"]="practise". Mandatory. Valid values: practice, live
+            credential["accountType"]="practice". Mandatory. Valid values: practice, live
             credential["apiToken"]="Your OANDA API token". Mandatory. Valid value: See your OANDA Account's API Token
 
         Returns:
