@@ -233,16 +233,11 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
         return pn
 
     def _read_historical_currencypair_rates(self, start, end, freq=None,
-                                            quote_currency=None, base_currency=None,
+                                            quote_currency="USD", base_currency="EUR",
                                             candleFormat=None, reversed=False,
                                             access_credential=None, session=None):
         session = _init_session(session)
         start, end = _sanitize_dates(start, end)
-
-        if base_currency is None:
-            base_currency = "EUR"
-        if quote_currency is None:
-            quote_currency = "USD"
 
         currencyPair = "%s_%s" % (base_currency, quote_currency)
 
