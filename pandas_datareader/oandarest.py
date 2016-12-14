@@ -18,7 +18,6 @@ from datetime import datetime
 from time import time
 
 import pandas as pd
-import re
 
 from oandapyV20 import API, V20Error
 import oandapyV20.endpoints.instruments as instruments
@@ -34,15 +33,15 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
     """
         Historical Currency Pair Reader using  OANDA's REST v20 API.
         See details at http://developer.oanda.com/rest-live-v20/instrument-ep/
-        symbols : string or Dict of strings.
+        symbols : string or List of strings.
             Each string is a currency pair with format BASE_QUOTE. Eg: ["EUR_USD", "JPY_USD"]
-        symbolsTypes: Dict of strings.
+        symbolsTypes: List of strings.
             Each string represent the type of instrument to fetch data for. Eg: For symbols=["EUR_USD", "EUR_JPY"] then symbolsTypes=["currency", "currency"]
             Valid values: currency
         start: string
-            Date to begin fetching curerncy pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
+            Date to begin fetching currency pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
         end: string
-            Date to end fetching curerncy pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
+            Date to end fetching currency pair, in RFC3339 ("%Y-%m-%dT%H:%M:%SZ)  # Eg: "2014-03-21T17:41:00Z"
         freq: string or Pandas's DateOffset
             Frequency or periodicity of the candlesticks to be retrieved
             Valid values are the following Panda's Offset Aliases (http://pandas.pydata.org/pandas-docs/stable/timeseries.html):
@@ -77,7 +76,7 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
             Default: See DEFAULT_CANDLE_FORMAT
         access_credential: Dict of strings
             Credential to query the api
-            credential["accountType"]="practise". Mandatory. Valid values: practice, live
+            credential["accountType"]="practice". Mandatory. Valid values: practice, live
             credential["apiToken"]="Your OANDA API token". Mandatory. Valid value: See your OANDA Account's API Token
 
         Returns:
@@ -123,7 +122,7 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
         "1M": "M"
     }
 
-    def __init__(self, symbols, symbolsTypes=None,
+    def __init__(self, symbols=["EUR_USD"], symbolsTypes=["currency"],
                  start=None, end=None,
                  freq=None, candleFormat=None,
                  session=None,
@@ -138,15 +137,12 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
             self.reader_compatible = False
 
         self.symbols = symbols
-        if symbols is None:
-            self.symbols = ["EUR_USD"]
-
         if type(symbols) is str:
             self.symbols = [symbols]
 
         self.symbolsTypes = symbolsTypes
-        if symbolsTypes is None:
-            self.symbolsTypes = ["currency"]
+        if type(symbolsTypes) is str:
+            self.symbolsTypes = [symbolsTypes]
 
         if len(self.symbols) != len(self.symbolsTypes):
             self.symbolsTypes = ["currency" for x in self.symbols]
@@ -233,16 +229,11 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
         return pn
 
     def _read_historical_currencypair_rates(self, start, end, freq=None,
-                                            quote_currency=None, base_currency=None,
+                                            quote_currency="USD", base_currency="EUR",
                                             candleFormat=None, reversed=False,
                                             access_credential=None, session=None):
         session = _init_session(session)
         start, end = _sanitize_dates(start, end)
-
-        if base_currency is None:
-            base_currency = "EUR"
-        if quote_currency is None:
-            quote_currency = "USD"
 
         currencyPair = "%s_%s" % (base_currency, quote_currency)
 
@@ -566,34 +557,28 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
                 response = oanda.request(request)
                 current_start = current_end
                 includeCandleOnStart = False
-            except Exception as error:
-                isExceedResultsLimitError = re.findall(
-                    "The results returned satisfying the query exceeds the maximum size", str(error))
-                isExceedResultsLimitError = True if len(
-                    isExceedResultsLimitError) else False
 
-                if isExceedResultsLimitError:
-                    # Problem: OANDA caps returned range to 5000 results max
-                    # Solution: Reduce requested date interval to return less
-                    # than 5000 results
+            except V20Error as error:
+                # Problem: OANDA caps returned range to 5000 results max
+                # Solution: Reduce requested date interval to return less
+                # than 5000 results
+                if "Maximum value for 'count' exceeded" in error.msg:
                     current_duration /= 2
                     continue
-                else:
-                    if type(error) is V20Error:
-                        print("Request failed with code: " + str(error.code) + " and message: " + str(error.msg))
-                    else:
-                        print("ERROR OANDA: " + str(error))
+                else: # re-raise
+                    print("ERROR OANDA: " + str(error))
                     raise error
+
+            except Exception as error:
+                print("ERROR : " + error)
+                raise error
 
             # print(response)
 
-            if not response:
+            if not (response and "candles" in response):
                 continue
 
             candles = response['candles']
-
-            if not candles:
-                continue
 
             # print(candles)
 
@@ -612,10 +597,7 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
     def _get_periods(self, start, end, delta):
         current_start = start
         while current_start < end:
-            if current_start > end:
-                current_end = end
-            else:
-                current_end = current_start + delta
+            current_end = current_start + delta
 
             yield current_start, current_end
 
@@ -629,8 +611,8 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
 
     def _reverse_pair(s, sep="_"):
         lst = s.split(sep)
-        return sep.join([lst[1], lst[0]])
+        return sep.join(lst[::-1])
 
     def _split_currency_pair(self, s, sep="_"):
         lst = s.split(sep)
-        return (lst[0], lst[1])
+        return tuple(lst)
