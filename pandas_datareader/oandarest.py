@@ -579,13 +579,10 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
 
             # print(response)
 
-            if not response:
+            if not (response and "candles" in response):
                 continue
 
             candles = response['candles']
-
-            if not candles:
-                continue
 
             # print(candles)
 
