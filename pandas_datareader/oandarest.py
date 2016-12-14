@@ -601,10 +601,7 @@ class OANDARestHistoricalInstrumentReader(_BaseReader):
     def _get_periods(self, start, end, delta):
         current_start = start
         while current_start < end:
-            if current_start > end:
-                current_end = end
-            else:
-                current_end = current_start + delta
+            current_end = current_start + delta
 
             yield current_start, current_end
 
